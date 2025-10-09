@@ -8,7 +8,7 @@ and column clusters, identified via locality-sensitive hashing (LSH).
     data/            ... datasets used in the experimental evaluation
     code/            ... Python source files and scripts
     config/          ... configuration files for running the experiments
-    environment.yml  ... required Python libraries
+    environment.yaml  ... required Python libraries
 
 ## Source Files
 The *code* folder includes the following files:
