@@ -1,0 +1,22 @@
+{
+    "dataset_names": [
+        "dblp",
+        "senate",
+        "classic",
+        "house",
+        "polblog"
+    ],
+    "algorithm_names": [
+        "CoClusLSH",
+        "HyDRA",
+        "Random-True",
+        "Random-False",
+        "mcc",
+        "smcc",
+        "itcc",
+        "cc",
+        "tcc",
+        "sc",
+        "sb"
+    ]
+}

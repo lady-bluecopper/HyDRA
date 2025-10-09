@@ -1,0 +1,32 @@
+{
+    "dataset_names": [
+        "dblp",
+        "senate",
+        "classic",
+        "house",
+        "polblog"
+    ],
+    "algorithm_names": [
+        "CoClusLSH",
+        "HyDRA"
+    ],
+    "query_exp": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "alpha": {
+        "Graph": 0.85,
+        "Hypergraph": 0.15
+    },
+    "num_iter": {
+        "Graph": 100000,
+        "Hypergraph": 100
+    },
+    "version": "Graph",
+    "sample_size": 100,
+    "seed": 42
+}

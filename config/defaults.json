@@ -1,0 +1,128 @@
+{
+    "data_dir": "../data/",
+    "out_dir": "../out/",
+    "datasets": {
+        "dblp": {
+            "means_nclusters": [
+                25,
+                21
+            ],
+            "weighted": "False"
+        },
+        "senate": {
+            "means_nclusters": [
+                6,
+                6
+            ],
+            "weighted": "False"
+        },
+        "classic": {
+            "means_nclusters": [
+                649,
+                718
+            ],
+            "weighted": "False"
+        },
+        "house": {
+            "means_nclusters": [
+                10,
+                8
+            ],
+            "weighted": "False"
+        },
+        "polblog": {
+            "means_nclusters": [
+                61,
+                354
+            ],
+            "weighted": "False"
+        },
+        "tags-math-sx.csv": {
+            "means_nclusters": [
+                431,
+                3416
+            ],
+            "weighted": "False"
+        },
+        "DAWN.csv": {
+            "means_nclusters": [
+                1314,
+                5479
+            ],
+            "weighted": "False"
+        },
+        "NDC-substances-full.csv": {
+            "means_nclusters": [
+                681,
+                516
+            ],
+            "weighted": "False"
+        },
+        "NDC-classes-full.csv": {
+            "means_nclusters": [
+                52,
+                49
+            ],
+            "weighted": "False"
+        },
+        "contact-high-school.csv": {
+            "means_nclusters": [
+                106,
+                774
+            ],
+            "weighted": "False"
+        },
+        "contact-primary-school.csv": {
+            "means_nclusters": [
+                70,
+                977
+            ],
+            "weighted": "False"
+        },
+        "email-Enron-full.csv": {
+            "means_nclusters": [
+                45,
+                131
+            ],
+            "weighted": "False"
+        },
+        "tags-ask-ubuntu.csv": {
+            "means_nclusters": [
+                126,
+                215
+            ],
+            "weighted": "False"
+        }
+    },
+    "sep": ",",
+    "nruns": 5,
+    "r": 20,
+    "b": 5,
+    "weights": [
+        1,
+        1,
+        1
+    ],
+    "min_size": 2,
+    "max_trials": 5,
+    "max_no_improvements": 2,
+    "use_means": "True",
+    "verbose": "False",
+    "max_workers": 1,
+    "algorithms": {
+        "CoClusLSH": 1e-6,
+        "HyDRA": 1.0,
+        "cc": {
+            "default_nclusters": 50
+        },
+        "tcc": {
+            "default_nclusters": 10
+        },
+        "sc": {
+            "default_nclusters": 9
+        },
+        "sb": {
+            "default_nclusters": 9
+        }
+    }
+}
