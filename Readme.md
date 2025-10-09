@@ -1,8 +1,8 @@
 # Overview
-This repository presents the code for **HyDRA**, a novel framework to find a lossless summary of a weighted hypergraph that attempts to minimize a storage-aware objective function that quantifies the space required to store the super-hyperedges of the summary hypergraph and the *correction table* that permits the exact reconstruction of the original hypergraph.
+This repository presents the code for **HyDRA**, a novel framework to find a lossless summary of a weighted hypergraph.
+This algorithm attempts to minimize a storage-aware objective function that quantifies the space required to store the super-hyperedges of the summary hypergraph and the *correction table* that permits the exact reconstruction of the original hypergraph.
 
-**HyDRA** is built upon an existing information-theoretic agglomerative co-clustering algorithm called CoClusLSH [1], which greedy merges similar row
-and column clusters, identified via locality-sensitive hashing (LSH).
+**HyDRA** is built upon an existing information-theoretic agglomerative co-clustering algorithm called CoClusLSH [1], which greedily merges similar row and column clusters, identified via locality-sensitive hashing (LSH).
 
 # Content
     data/            ... datasets used in the experimental evaluation
@@ -15,25 +15,25 @@ The *code* folder includes the following files:
 
  - *hyp_sum.py*: implementation of HyDRA.
  - *leman.py*: implementation of CoClusLSH.
- - *helpers.py*: helpers function used by CoClusLSH and HyDRA.
+ - *helpers.py*: helper function used by CoClusLSH and HyDRA.
  - *summary_utils.py*: some useful methods to process, read, and write summaries of hypergraphs. 
  - *utils.py*: some useful methods.
  - *plots_utils.py*: functions to plot an incidence matrix whose rows and columns are reordered based on the cluster assignments.
  - *hn_moea_im*: Python library to run Influence Maximization on hypergraphs and hypergraph summaries.
  - *pagerank*: Python library to run PageRank on hypergraphs.
- - *taucc*: Python library to run the co-clustering algorithm PB-$\tau$-CC.
- - *tautcc*: Python library to run the co-clustering algorithm PB-$\tau$-TCC.
+ - *taucc*: Python library to run the co-clustering algorithm PB- $\tau$ CC.
+ - *tautcc*: Python library to run the co-clustering algorithm PB- $\tau$ TCC.
  - *queries.py*: methods to run several types of queries on hypergraphs and hypergraph summaries.
  - *run_data_summarization.py*: script to perform lossless hypergraph summarization.
  - *run_hyper_im.py*: script to perform Influence Maximization on hypergraphs and hypergraph summaries.
- - *run_queries.py*: scritp to answer queries on hypergraphs and hypergraph summaries.
+ - *run_queries.py*: script to answer queries on hypergraphs and hypergraph summaries.
  
  ## Config Files
-The *config* folder includes the following *yaml* files to set the values of the hyper-parameters used by HyDRA and the competitors:
+The *config* folder includes the following *yaml* files to set the values of the hyperparameters used by HyDRA and the competitors:
 
- - *defaults.json*: includes the full list of datasets and algorithms, the paths to the data and output directories, and default values of the hyperparameters of the summarization algorithms. For each dataset, it reports the default number of node and hyperedge clusters to search, and whether it is weighted or not. For each algorithm that requires a number of clusters as input, it reports the default number of clusters. For CoClusLSH and HyDRA, it reports the default cost threshold.
- - *im.json*: includes the list of datasets and algorithms to consider in the Influence Maximization experiments, as well as the hyper-parameters used by the *hn_moea_im* library. To overwrite default values, the desired parameter configuration must be included in this file.
- - *queries.json*: includes the list of datasets and algorithms to consider in the query-asnwering experiment, as well as the parameters required to run each type of query. To overwrite default values, the desired parameter configuration must be included in this file.
+ - *defaults.json*: includes the full list of datasets and algorithms, the paths to the data and output directories, and default values of the hyperparameters of the summarization algorithms. For each dataset, it reports the default number of node and hyperedge clusters to search, and whether the dataset is weighted or not. For each algorithm that requires a number of clusters as input, it reports the default number of clusters that it uses. For CoClusLSH and HyDRA, it reports the default cost threshold.
+ - *im.json*: includes the list of datasets and algorithms to consider in the Influence Maximization experiments, as well as the hyperparameters used by the *hn_moea_im* library. To overwrite default values, the desired parameter configuration must be included in this file.
+ - *queries.json*: includes the list of datasets and algorithms to consider in the query-answering experiment, as well as the parameters required to run each type of query. To overwrite default values, the desired parameter configuration must be included in this file.
  - *summ.json*: includes the list of datasets and algorithms to consider in the hypergraph summarization experiment. To overwrite default values, the desired parameter configuration must be included in this file.
 
 ## Parameters
@@ -42,8 +42,8 @@ Parameters used by CoClusLSH and HyDRA in hypergraph summarization:
 
 - *r*: signature size for LSH (used by CoClusLSH and HyDRA).
 - *b*: number of hash tables for LSH (used by CoClusLSH and HyDRA).
-- *weights*: importance of each term in the storage-aware obective function used by HyDRA.
-- *min_size*: min size of a candidate group of clusters to merge in order to be processed (used by CoClusLSH and HyDRA).
+- *weights*: importance of each term in the storage-aware objective function used by HyDRA.
+- *min_size*: min size of a candidate group of clusters to merge to be processed (used by CoClusLSH and HyDRA).
 - *max_trial*s: max number of cluster merges to try (used by CoClusLSH and HyDRA).
 - *max_no_improvements*: max number of merge tentative with no improvements before exiting (used by CoClusLSH and HyDRA).
 
@@ -57,23 +57,23 @@ Parameters used in query-answering:
 
 Parameters used by HN-MOEA-IM:
 
-- *min_seed_nodes*: min seed set size for EA algorithm.
-- *max_seed_nodes*: max seed set size for EA algorithm.
-- *population_size*: population size for EA algorithm.
-- *offspring_size*: for EA algorithm.
-- *max_generations*: for EA algorithm.
-- *tournament_size*: for EA algorithm.
+- *min_seed_nodes*: min seed set size for the EA algorithm.
+- *max_seed_nodes*: max seed set size for the EA algorithm.
+- *population_size*: population size for the EA algorithm.
+- *offspring_size*: offspring size for the EA algorithm.
+- *max_generations*: maximum number of generations for the EA algorithm.
+- *tournament_size*: tournament size for the EA algorithm.
 - *mutation_rate*: mutation rate.
 - *crossover_rate*: crossover rate.
-- *num_elites*: for EA algorithm.
-- *threshold*: used for LT contagion model (varies per network).
-- *p_min*: used for SICP contagion model.
-- *p_max*: used for SICP contagion model.
+- *num_elites*: for the EA algorithm.
+- *threshold*: used for the LT contagion model (varies per network).
+- *p_min*: used for the SICP contagion model.
+- *p_max*: used for the SICP contagion model.
 - *max_hop*: max number of hops within which influence is propagated.
 - *model*: contagion model (can take values *WC*, *LT*, or *SICP*).
 - *init_strategy*: strategy to initialize population.
 - *no_simulations*: number of Monte-Carlo simulations.
-- *custom_mutation*: for EA algorithm.
+- *custom_mutation*: whether to use the custom mutation function for the EA algorithm.
 
 Other parameters:
 
@@ -125,4 +125,4 @@ This package is released under the GNU General Public License.
 
 [1] Tiantian Gao and Leman Akoglu. 2014. Fast information-theoretic agglomerative co-clustering. In Australasian Database Conference. Springer, 147–159.
 
-[2]  Elena Battaglia, Federico Peiretti, and Ruggero G Pensa. 2024. Fast parameterless prototype-based co-clustering. Machine Learning 113, 4 (2024), 2153–2181.
+[2]  Elena Battaglia, Federico Peiretti, and Ruggero G. Pensa. 2024. Fast parameterless prototype-based co-clustering. Machine Learning 113, 4 (2024), 2153–2181.
