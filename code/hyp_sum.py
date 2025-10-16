@@ -19,21 +19,21 @@ def compute_delta_bc(sd_cand1, sd_o, Dnzm, Dzm, den1, den2):
             blks_case1 = sd_cand1[case1_mask]
             tmp_cand1_blocks.extend(blks_case1.tolist())
             corr_minus_sum_case1 = Dzm[blks_case1, -1:].sum()
-            last_col_Dnzm = Dnzm.getcol(Dnzm.shape[1] - 1) 
-            corr_plus_sum_case1 = last_col_Dnzm[blks_case1, :].sum() 
+            last_col_Dnzm = Dnzm.getcol(Dnzm.shape[1] - 1)
+            corr_plus_sum_case1 = last_col_Dnzm[blks_case1, :].sum()
             term_c += (corr_minus_sum_case1 - corr_plus_sum_case1)
         if np.any(case2_mask):
             blks_case2 = sd_cand1[case2_mask]
-            Dnzm_but_last_col = Dnzm[:, :-1] 
+            Dnzm_but_last_col = Dnzm[:, :-1]
             corr_plus_sum_case2 = Dnzm_but_last_col[blks_case2, :].sum()
-            Dzm_but_last_col = Dzm[:, :-1] 
+            Dzm_but_last_col = Dzm[:, :-1]
             corr_minus_sum_case2 = Dzm_but_last_col[blks_case2, :].sum()
             term_c += (corr_plus_sum_case2 - corr_minus_sum_case2)
             term_b -= np.sum(case2_mask)
-    if len(sd_o) > 0: 
+    if len(sd_o) > 0:
         densities = Dnzm[sd_o, :].sum(axis=1).A.flatten() / den2
         case1_o_mask = (densities >= 0.5)
-        case2_o_mask = ~case1_o_mask 
+        case2_o_mask = ~case1_o_mask
         if np.any(case1_o_mask):
             blks_case1_o = sd_o[case1_o_mask]
             tmp_cand1_blocks.extend(blks_case1_o.tolist())
@@ -51,9 +51,9 @@ def compute_delta_bc(sd_cand1, sd_o, Dnzm, Dzm, den1, den2):
     return term_b, term_c, tmp_cand1_blocks
 
 
-def compute_num_corrections(DnZ: csr_matrix, 
-                            Dm: csr_matrix, 
-                            Nx: np.ndarray, 
+def compute_num_corrections(DnZ: csr_matrix,
+                            Dm: csr_matrix,
+                            Nx: np.ndarray,
                             Ny: np.ndarray,
                             verbose=False) -> int:
     """
@@ -100,10 +100,10 @@ def compute_num_corrections(DnZ: csr_matrix,
     return int(corr_minus + corr_plus)
 
 
-def compute_num_corrections_(DnZ: csr_matrix, 
-                            Dm, 
-                            Bs: np.ndarray, 
-                            verbose=False) -> int:
+def compute_num_corrections_(DnZ: csr_matrix,
+                             Dm,
+                             Bs: np.ndarray,
+                             verbose=False) -> int:
     '''
     DnZ: matrix of non-zero entries in each block
     Dm: membership matrix
@@ -111,7 +111,7 @@ def compute_num_corrections_(DnZ: csr_matrix,
     '''
     # nodes to remove
     # number of 1s in the blocks that are 0s in the original matrix
-    rows, cols = Dm.nonzero() # type: ignore
+    rows, cols = Dm.nonzero()  # type: ignore
     corr_minus = (Bs - DnZ)[rows, cols].sum()
     if verbose:
         print('SUM corr_minus', corr_minus)
@@ -128,11 +128,11 @@ def compute_num_corrections_(DnZ: csr_matrix,
     return corr_minus + corr_plus
 
 
-def hypersummary_cost(DnZ: csr_matrix, 
-                      Dm: csr_matrix, 
+def hypersummary_cost(DnZ: csr_matrix,
+                      Dm: csr_matrix,
                       Bs: np.ndarray,
-                      Ss: list[int], 
-                      weights=[1, 1, 1], 
+                      Ss: list[int],
+                      weights=[1, 1, 1],
                       verbose=False):
     '''
     DnZ: matrix of non-zero entries in each block
@@ -161,10 +161,10 @@ def init_cost_hs(A: csr_matrix):
     return ln + nnz + c
 
 
-def cc_cost_hs(NX: np.ndarray, 
-               NY: np.ndarray, 
-               DnZ: csr_matrix, 
-               weights=[1, 1, 1], 
+def cc_cost_hs(NX: np.ndarray,
+               NY: np.ndarray,
+               DnZ: csr_matrix,
+               weights=[1, 1, 1],
                verbose=False):
     """
     Parameters:
@@ -213,18 +213,18 @@ def cc_cost_hs(NX: np.ndarray,
     # cost of storing the superhyperedges
     e2 = memberships.sum()
     # cost of corrections
-    e3 = compute_num_corrections(Dnz, memberships, 
-                                 Nx, Ny, 
+    e3 = compute_num_corrections(Dnz, memberships,
+                                 Nx, Ny,
                                  verbose=verbose)
     if verbose:
         print('c(a)', e1, 'c(b)', e2, 'c(c)', e3, 'TOT', e1 + e2 + e3)
     return e1 * weights[0] + e2 * weights[1] + e3 * weights[2]
 
 
-def init_perm_hs(r: int, 
-                 b: int, 
-                 A: csr_matrix, 
-                 weights=[1, 1, 1], 
+def init_perm_hs(r: int,
+                 b: int,
+                 A: csr_matrix,
+                 weights=[1, 1, 1],
                  verbose=False):
     m, n = A.shape
     Nx = np.ones(m, dtype=np.int64)
@@ -268,17 +268,17 @@ def symm_diff_and_inter(lst1, lst2):
     return sd1, sd2, inter
 
 
-def cos_col_hash_hs(r: int, 
+def cos_col_hash_hs(r: int,
                     b: int,
-                    k0: int, 
+                    k0: int,
                     l0: int,
-                    Nx: np.ndarray, 
+                    Nx: np.ndarray,
                     NY: np.ndarray,
                     QY: np.ndarray,
                     DnZ: csr_matrix,
-                    col_merge: bool=True,
-                    min_size: int=2,
-                    max_trials: int=5,
+                    col_merge: bool = True,
+                    min_size: int = 2,
+                    max_trials: int = 5,
                     weights=[1, 1, 1],
                     verbose=False):
     """
@@ -302,7 +302,7 @@ def cos_col_hash_hs(r: int,
     Dnz = DnZ.copy()
     Ny = NY.copy()
     Qy = QY.copy()
-    
+
     # Compute probabilities
     Nxy = np.outer(Nx, Ny)
     Dz = Nxy - Dnz
@@ -315,7 +315,7 @@ def cos_col_hash_hs(r: int,
     assert len(cluster_ids) == len(Ny)
     assert len(cluster_ids) == np.sum(Ny > 0)
     assert len(cluster_ids) == l0
-    
+
     ucg, candidategroups = generate_candidate_groups(r, b, k0, l0, Pnz)
 
     # Step 4: Merge candidate groups
@@ -361,7 +361,8 @@ def cos_col_hash_hs(r: int,
                 # clusters in cand1 not in ind[o],
                 # clusters in ind[o] not in cand1
                 # clusters in both cand1 and ind[o]
-                sd_cand1, sd_o, inter_cand1o = symm_diff_and_inter(cand1_blks, o_blks)
+                sd_cand1, sd_o, inter_cand1o = symm_diff_and_inter(cand1_blks,
+                                                                   o_blks)
                 sd_cand1 = np.array(sd_cand1, dtype=int)
                 sd_o = np.array(sd_o, dtype=int)
                 tmp_cand1_blocks = inter_cand1o
@@ -381,7 +382,9 @@ def cos_col_hash_hs(r: int,
                 if len(sd_o) > 0:
                     den2 = cis_sum * Nx[sd_o]
 
-                d_tb, term_c, new_blocks = compute_delta_bc(sd_cand1, sd_o, Dnzm, Dzm, den1, den2)
+                d_tb, term_c, new_blocks = compute_delta_bc(sd_cand1, sd_o,
+                                                            Dnzm, Dzm,
+                                                            den1, den2)
                 term_b += d_tb
                 tmp_cand1_blocks.extend(new_blocks)
 
@@ -421,15 +424,15 @@ def cos_col_hash_hs(r: int,
     return Ny, Qy, cluster_ids
 
 
-def jac_col_hash2_hs(A: csr_matrix, 
-                     r: int, 
-                     b: int, 
-                     NY: np.ndarray, 
-                     QY: np.ndarray, 
+def jac_col_hash2_hs(A: csr_matrix,
+                     r: int,
+                     b: int,
+                     NY: np.ndarray,
+                     QY: np.ndarray,
                      col_merge: bool,
-                     min_size: int=5,
+                     min_size: int = 5,
                      weights=[1, 1, 1],
-                     verbose: bool=False):
+                     verbose: bool = False):
     '''
     r: code length
     b: num hash tables
@@ -438,7 +441,7 @@ def jac_col_hash2_hs(A: csr_matrix,
     '''
     Ny = NY.copy()
     Qy = QY.copy()
-    
+
     ucg, candidategroups = generate_candidate_groups_jac(r, b, A)
     if verbose:
         print('num candidate groups', len(ucg))
@@ -487,10 +490,11 @@ def jac_col_hash2_hs(A: csr_matrix,
             else:
                 term_a = 0  # number of super-hyperedges does not change
             # COST b and c
-            d_tb, term_c, new_blocks = compute_delta_bc(sd_cand1, sd_o, Dnzm, Dzm, sum_cis, sum_cis)
+            d_tb, term_c, new_blocks = compute_delta_bc(sd_cand1, sd_o, Dnzm,
+                                                        Dzm, sum_cis, sum_cis)
             term_b += d_tb
             tmp_cand1_blocks.extend(new_blocks)
-                
+
             cur_cost = term_a * weights[0] + term_b * weights[1] + term_c * weights[2]
             if verbose:
                 print('cur_cost', cur_cost)
@@ -513,15 +517,15 @@ def jac_col_hash2_hs(A: csr_matrix,
     return Ny, Qy
 
 
-def hc_search_hs(A, 
-                 r=20, 
-                 b=5, 
-                 seed=42, 
+def hc_search_hs(A,
+                 r=20,
+                 b=5,
+                 seed=42,
                  weights=[1, 1, 1],
-                 cost_threshold: float=1,
-                 min_size: int=2,
-                 max_trials: int=5,
-                 max_no_improvements: int=2,
+                 cost_threshold: float = 1,
+                 min_size: int = 2,
+                 max_trials: int = 5,
+                 max_no_improvements: int = 2,
                  verbose=False):
     """
     Parameters:
@@ -703,7 +707,7 @@ def hc_search_hs(A,
 
         if no_improvements >= max_no_improvements:
             break
-        
+
         it += 1
 
     print(f"Final cost {c0:.6f}")

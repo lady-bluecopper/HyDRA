@@ -92,11 +92,11 @@ def process_correction(x: str, node_id_map: Dict[str, int]) -> Tuple[List[int], 
 
 
 def load_summary(summary_path: str,
-                 node_id_map: Dict[str, int]=dict()) -> Tuple[List[List[int]],
-                                                        List[List[int]],
-                                                        List[int],
-                                                        Dict[int, List],
-                                                        Dict[str, int]]:
+                 node_id_map: Dict[str, int] = dict()) -> Tuple[List[List[int]],
+                                                                List[List[int]],
+                                                                List[int],
+                                                                Dict[int, List],
+                                                                Dict[str, int]]:
     # Load summary from disk.
     supernodes = []
     superedges = []
@@ -137,7 +137,6 @@ def load_summary(summary_path: str,
                             corrections[corr_hed_idx].append((pl, min, hed_w))
                         else:
                             corrections[corr_hed_idx].append((pl, min))
-                        
     return supernodes, superedges, superedge_weights, corrections, node_id_map
 
 
@@ -171,7 +170,7 @@ def are_equal(H1: List[List[int]], H2: List[List[int]], H1_w: List[int], H2_w: L
         H1, H1_w = list(H1_t), list(H1_w_t)
         H2_t, H2_w_t = zip(*paired_H2)
         H2, H2_w = list(H2_t), list(H2_w_t)
-    else:  
+    else:
         H1.sort(key=cmp_key)
         H2.sort(key=cmp_key)
     for idx in range(len(H1)):
@@ -253,7 +252,6 @@ def get_summary_from_blocks(Nx,  # node cluster sizes
                                 sizes,
                                 weights=alphas,
                                 verbose=verbose)
-    
     return node_clusters, collapsed_hedge_clusters,\
         collapsed_superedges, collapsed_weights, cost
 
@@ -308,7 +306,7 @@ def decode_summary(node_clusters: Dict[int, List[int]],
 
 def get_biclustering_from_summary(out_dir: str,
                                   dataset_name: str,
-                                  algo: str, 
+                                  algo: str,
                                   cost_thresh: float,
                                   r: int,
                                   b: int,
@@ -316,7 +314,7 @@ def get_biclustering_from_summary(out_dir: str,
                                   max_trials: int,
                                   max_no_improvements: int,
                                   run: int,
-                                  node_id_map: Dict[str, int]=dict()):
+                                  node_id_map: Dict[str, int] = dict()):
     # From a summary, retrieve the node and hyperedge clusters.
     if cost_thresh == -1:
         sum_name = get_summary_name(dataset_name, algo, run=run)
@@ -333,37 +331,37 @@ def get_biclustering_from_summary(out_dir: str,
     sum_path = os.path.join(out_dir, sum_name)
     sn, se, sw, corr_dict, node_id_map = load_summary(sum_path, node_id_map)
     hcls = get_hedge_clusters_from_summary(sn, se, sw, corr_dict)
-    
+
     or_name = f'original__data={dataset_name}.csv'
     or_path = os.path.join(out_dir, or_name)
-    sn_or, se_or, _, _, _= load_summary(or_path, node_id_map)
+    sn_or, se_or, _, _, _ = load_summary(or_path, node_id_map)
     A = ut.compute_matrix_from_hedge_list(se_or)
     H_dict = defaultdict(set)
     for hidx, hedge in enumerate(se_or):
         h_tup = tuple(sorted(hedge))
         H_dict[h_tup].add(hidx)
-    
+
     Qx = np.zeros(len(sn_or))
     for s_id, supN in enumerate(sn):
         for n in supN:
             Qx[n] = s_id
     Nx = [len(supN) for supN in sn]
-    
+
     Qy = np.zeros(len(se_or))
     for cl_id, h_cl in hcls.items():
         for hedge in h_cl:
-             indices = list(H_dict[hedge])
-             hidx = indices[0]
-             H_dict[hedge].remove(hidx)
-             Qy[hidx] = cl_id
+            indices = list(H_dict[hedge])
+            hidx = indices[0]
+            H_dict[hedge].remove(hidx)
+            Qy[hidx] = cl_id
     Ny = sw
-    
+
     return A, Qx, Qy, Nx, Ny
 
 
 def get_hpx_graph_from_summary(out_dir: str,
                                dataset_name: str,
-                               algo: str, 
+                               algo: str,
                                cost_thresh: float,
                                r: int,
                                b: int,
@@ -371,7 +369,7 @@ def get_hpx_graph_from_summary(out_dir: str,
                                max_trials: int,
                                max_no_improvements: int,
                                run: int,
-                               node_id_map: Dict[str, int]=dict()):
+                               node_id_map: Dict[str, int] = dict()):
     # Create a HypergraphX hypergraph from a summary.
     if cost_thresh == -1:
         sum_name = get_summary_name(dataset_name, algo, run=run)
@@ -387,7 +385,7 @@ def get_hpx_graph_from_summary(out_dir: str,
                                     run)
     sum_path = os.path.join(out_dir, sum_name)
     _, se, sw, _, node_id_map = load_summary(sum_path, node_id_map)
-    
+
     superH_tup = defaultdict(int)
     for sid, x in enumerate(se):
         if len(x) == 0:
@@ -435,10 +433,10 @@ def save_summary(supernodes: Dict[int, List[int]],
                  weights: List[int],
                  corrections: List[List],
                  file_name: str,
-                 inv_node_id_map: Dict[int, str]=dict()):
+                 inv_node_id_map: Dict[int, str] = dict()):
     # Save summary to disk in a format compatible with the *load_summary* function.
     with open(file_name, 'w') as out_f:
-        out_f.write('V\n')   
+        out_f.write('V\n')
         for sn_id in range(len(supernodes)):
             out_f.write(' '.join([str(inv_node_id_map.get(x, x)) for x in supernodes[sn_id]]) + '\n')
         out_f.write('E\n')
@@ -480,14 +478,14 @@ def get_and_evaluate_summary(Nx: np.ndarray,  # sizes of node clusters
                              run: int,  # seed used by the algorithm
                              out_dir: str,  # directory to save output
                              node_id_map: Dict[str, int]=dict(),  # mapping outer - inner node ids
-                             hedge_weights=list(), # weights of hyperedges in original hypergraph
-                             alphas: List[float]=[1, 1, 1],  # importance factor cost func
-                             verbose: bool=False,
-                             debugging: bool=False):
+                             hedge_weights = list(), # weights of hyperedges in original hypergraph
+                             alphas: List[float] = [1, 1, 1],  # importance factor cost func
+                             verbose: bool = False,
+                             debugging: bool = False):
     inv_node_id_map = dict()
     if len(node_id_map) > 0:
         inv_node_id_map = {k: v for v, k in node_id_map.items()}
-        
+
     nc, hc, se, weights, _ = get_summary_from_blocks(Nx, Ny,
                                                      Qx, Qy,
                                                      DnZ,
@@ -509,7 +507,7 @@ def get_and_evaluate_summary(Nx: np.ndarray,  # sizes of node clusters
         print('num correction in table', num_corr)
     if debugging:
         # sanity check
-        ## some hyperedge may appear multiple time
+        # some hyperedge may appear multiple time
         H_s_weights_dict = defaultdict(int)
         for x in H_lst:
             H_s_weights_dict[tuple(sorted(x))] += 1
@@ -518,8 +516,9 @@ def get_and_evaluate_summary(Nx: np.ndarray,  # sizes of node clusters
         for x, v in H_s_weights_dict.items():
             H_s.append(x)
             H_s_weights.append(v)
-        H_decoded, H_decoded_weights = decode_summary(nc, se, weights, corrections, True)
-        ## compare hedges
+        H_decoded, H_decoded_weights = decode_summary(nc, se, weights,
+                                                      corrections, True)
+        # compare hedges
         if not are_equal(H_s, H_decoded, H_s_weights, H_decoded_weights):
             out_name = get_summary_name(dataset,
                                         algo,
@@ -548,7 +547,8 @@ def get_and_evaluate_summary(Nx: np.ndarray,  # sizes of node clusters
                                 max_no_improvements,
                                 run)
     out_path = os.path.join(out_dir, out_name)
-    save_summary(nc, se, weights, corrections, out_path, inv_node_id_map=inv_node_id_map)
+    save_summary(nc, se, weights, corrections,
+                 out_path, inv_node_id_map=inv_node_id_map)
     # recompute cost considering hedge weights > 1
     _, SE, _, SC, _ = load_summary(out_path, dict())
     cost = summary_cost(SE, SC)
@@ -592,17 +592,17 @@ def get_and_evaluate_summary(Nx: np.ndarray,  # sizes of node clusters
         else:
             out['Num Init Clusters'] = r
     return out
-    
+
 
 def get_summary_name(dataset: str,
                      algo: str,
-                     cost_thresh: float=-1,
-                     r: int=-1,
-                     b: int=-1,
-                     min_size: int=-1,
-                     max_trials: int=-1,
-                     max_no_improvements: int=-1,
-                     run: int=0):
+                     cost_thresh: float = -1,
+                     r: int = -1,
+                     b: int = -1,
+                     min_size: int = -1,
+                     max_trials: int = -1,
+                     max_no_improvements: int = -1,
+                     run: int = 0):
     # Get file_name of the summary generated by *algo*
     # with the specified parameter combination.
     name = 'summary'
@@ -636,8 +636,8 @@ def get_params_from_summary_name(file_name: str):
             param_val = param_val[:-4]
         params_dict[param_lst[0]] = param_val
     return params_dict
-    
-        
+
+
 def get_file_size(out_path: str):
     # Find the size of the summary file.
     months = ['jan', 'feb', 'mar',
@@ -663,8 +663,8 @@ def get_file_size(out_path: str):
             return cand_size + 'B'
         except ValueError:
             for i in range(len(cmd_out)):
-                if cmd_out[-i-1].strip().lower() in months:
-                    cand_size = cmd_out[-i-2].strip()
+                if cmd_out[- i - 1].strip().lower() in months:
+                    cand_size = cmd_out[- i - 2].strip()
                     if cand_size[-1] in ['B', 'K', 'M', 'G', 'T']:
                         return cand_size
                     try:
@@ -703,7 +703,7 @@ def summary_cost(superedges: List[List[int]],
     return e1 * weights[0] + e2 * weights[1] + e3 * weights[2] + e4 * weights[0]
 
 
-def random_clustering(A: csr_matrix, 
+def random_clustering(A: csr_matrix,
                       H: List[List[int]],
                       row_nclusters: int,
                       col_nclusters: int,
@@ -726,7 +726,7 @@ def random_clustering(A: csr_matrix,
             Nx[r_cl_id] = r_cl_len
         residual = tot_rows - np.sum(Nx)
         Nx[-1] += residual
-        
+
         c_cl_len = int(tot_cols / col_nclusters)
         for c_cl_id in range(col_nclusters):
             Ny[c_cl_id] = c_cl_len
@@ -742,7 +742,7 @@ def random_clustering(A: csr_matrix,
             Nx[r_cl_id] = r_cl_len
         residual = tot_rows - np.sum(Nx)
         Nx[-1] += residual
-        
+
         cum_c_cl_lens = 0
         for c_cl_id in range(col_nclusters):
             ub = tot_cols - cum_c_cl_lens - col_nclusters + c_cl_id + 1
@@ -762,7 +762,7 @@ def random_clustering(A: csr_matrix,
         for _ in range(c_c_len):
             Qy[c_id] = c_c_id
             c_id += 1
-    # Random cluster assignment        
+    # Random cluster assignment
     np.random.shuffle(Qx)
     np.random.shuffle(Qy)
     # Create cluster maps

@@ -8,7 +8,7 @@ from tqdm.contrib.concurrent import process_map
 sys.path.append('.')
 import summary_utils as sut
 import utils as ut
-import queries as qr 
+import queries as qr
 
 
 def parallel_connected_components(inp):
@@ -16,7 +16,7 @@ def parallel_connected_components(inp):
     file_path = inp[0]
     is_summary = inp[1]
     node_id_map = inp[2]
-    
+
     file_name = os.path.basename(file_path)
     nc, se, _, _, _ = sut.load_summary(file_path, node_id_map)
     st = time.time()
@@ -42,7 +42,7 @@ def parallel_pagerank(inp):
     node_sample = inp[4]
     version = inp[5]
     node_id_map = inp[6]
-    
+
     file_name = os.path.basename(file_path)
     if version == 'Graph':
         ppr_vs, runtimes = qr.compute_graph_pagerank(file_path,
@@ -57,9 +57,9 @@ def parallel_pagerank(inp):
                                                          num_iter,
                                                          node_id_map=node_id_map)
     else:
-        ppr_vs, runtimes = qr.compute_pagerank(file_path, 
-                                               is_summary, 
-                                               alpha=alpha, 
+        ppr_vs, runtimes = qr.compute_pagerank(file_path,
+                                               is_summary,
+                                               alpha=alpha,
                                                num_iter=num_iter,
                                                node_sample=node_sample,
                                                node_id_map=node_id_map)
@@ -75,14 +75,14 @@ def parallel_pagerank(inp):
     out['Version'] = version
     out['Time (s)'] = runtimes
     return out
-    
-    
+
+
 def parallel_node_degrees(inp):
     # Find the (approximate) node degrees.
     file_path = inp[0]
     is_summary = inp[1]
     node_id_map = inp[2]
-    
+
     file_name = os.path.basename(file_path)
 
     nc, se, sw, _, _ = sut.load_summary(file_path, node_id_map)
@@ -102,10 +102,10 @@ def parallel_node_degrees(inp):
         st = time.time()
         node_hypdegs = qr.get_node_hyperdegrees(se)
         end_2 = time.time() - st
-        
+
         dname = file_name.split('__')[1].split('=')[1]
         out = {'data': dname}
-    
+
     out['Node Degs'] = node_degs
     out['Node Hyper-Degs'] = node_hypdegs
     out['Node Degs Time (s)'] = end_1
@@ -120,7 +120,7 @@ def parallel_reachability(inp):
     node_pairs = inp[2]
     seed = inp[3]
     node_id_map = inp[4]
-    
+
     file_name = os.path.basename(file_path)
 
     nc, se, _, _, _ = sut.load_summary(file_path, node_id_map)
@@ -134,10 +134,10 @@ def parallel_reachability(inp):
         st = time.time()
         dists = qr.are_reachables(node_pairs, se)
         end = time.time() - st
-        
+
         dname = file_name.split('__')[1].split('=')[1]
         out = {'data': dname}
-    
+
     out['Reachability'] = dists
     out['Seed'] = seed
     out['Time (s)'] = end
@@ -151,7 +151,7 @@ def parallel_reachable_at_k(inp):
     node_list = inp[2]
     k = inp[3]
     node_id_map = inp[4]
-    
+
     file_name = os.path.basename(file_path)
     nc, se, _, _, _ = sut.load_summary(file_path, node_id_map)
 
@@ -167,7 +167,7 @@ def parallel_reachable_at_k(inp):
         end = time.time() - st
         dname = file_name.split('__')[1].split('=')[1]
         out = {'data': dname}
-    
+
     out['Neighs at k'] = ngb_at_k
     out['k'] = k
     out['Time (s)'] = end
@@ -180,7 +180,7 @@ def parallel_closeness(inp):
     is_summary = inp[1]
     node_list = inp[2]
     node_id_map = inp[3]
-    
+
     file_name = os.path.basename(file_path)
     nc, se, _, _, _ = sut.load_summary(file_path, node_id_map)
 
@@ -196,14 +196,14 @@ def parallel_closeness(inp):
         end = time.time() - st
         dname = file_name.split('__')[1].split('=')[1]
         out = {'data': dname}
-    
+
     out['Closeness'] = cl_dict
     out['Time (s)'] = end
     return out
 
 
 if __name__ == '__main__':
-    
+
     parser = ut.get_parser()
     args = parser.parse_args()
     cfg = ut.load_hyperparams(args.defaults)
@@ -218,9 +218,9 @@ if __name__ == '__main__':
     nruns = cfg['nruns']
     workers = cfg['max_workers']
     seed = cfg['seed']
-    
+
     r = cfg['r']
-    b = cfg['b']   
+    b = cfg['b']
     min_size = cfg['min_size']
     max_trials = cfg['max_trials']
     max_no_improvements = cfg['max_no_improvements']
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     num_iter = cfg['num_iter'][version]
     sample_size = cfg['sample_size']
     query_exp = cfg['query_exp']
-    
+
     summary_dir = os.path.join(out_dir, 'summaries')
 
     orig_paths = []  # ORIGINAL PATHS
@@ -241,13 +241,13 @@ if __name__ == '__main__':
         _, _, _, _, node_id_map = sut.load_summary(data_path, dict())
         orig_paths.append(data_path)
         orig_node_id_maps[dataset] = node_id_map
-        
+
         for algo in algo_names:
             for run in range(nruns):
                 sum_name = ut.get_summary_file_name(algo, dataset, run, cfg)
                 sum_path = os.path.join(summary_dir, sum_name)
                 summary_paths.append(sum_path)
-                
+
     # PAGERANK QUERY
     if query_exp[0]:
         node_samples = defaultdict(list)
@@ -267,7 +267,7 @@ if __name__ == '__main__':
             params = sut.get_params_from_summary_name(file_name)
             inputs.append([path, True, alpha, num_iter, node_samples[params['data']], version, orig_node_id_maps[params['data']]])
         outputs = process_map(parallel_pagerank, inputs, max_workers=workers)
-        
+
         today = ut.get_date_str()
         real_ppr_path = os.path.join(out_dir, f'ACTUAL_PPR__date={today}.csv')
         approx_ppr_path = os.path.join(out_dir, f'APPROX_PPR__date={today}.csv')
@@ -295,7 +295,7 @@ if __name__ == '__main__':
         real_df_.to_csv(real_ppr_path)
         approx_df_ = pd.concat(approx_dfs)
         approx_df_.to_csv(approx_ppr_path)
-    
+
     # DEGREE QUERY
     if query_exp[1]:
         inputs = []
@@ -307,8 +307,9 @@ if __name__ == '__main__':
             file_name = os.path.basename(path)
             params = sut.get_params_from_summary_name(file_name)
             inputs.append([path, True, orig_node_id_maps[params['data']]])
-        outputs = process_map(parallel_node_degrees, inputs, max_workers=workers)
-        
+        outputs = process_map(parallel_node_degrees, inputs,
+                              max_workers=workers)
+
         today = ut.get_date_str()
         real_deg_path = os.path.join(out_dir, f'ACTUAL_DEGREES__date={today}.csv')
         approx_deg_path = os.path.join(out_dir, f'APPROX_DEGREES__date={today}.csv')
@@ -332,7 +333,7 @@ if __name__ == '__main__':
         real_df_.to_csv(real_deg_path)
         approx_df_ = pd.concat(approx_dfs)
         approx_df_.to_csv(approx_deg_path)
-    
+
     # REACHABILITY QUERY
     if query_exp[2]:
         # Generate queries
@@ -362,11 +363,11 @@ if __name__ == '__main__':
                 params = sut.get_params_from_summary_name(file_name)
                 inputs.append([path, True, node_samples[params['data']][run], run, orig_node_id_maps[params['data']]])
         outputs = process_map(parallel_reachability, inputs, max_workers=workers)
-        
+
         today = ut.get_date_str()
         real_reach_path = os.path.join(out_dir, f'ACTUAL_REACHABLE__date={today}.csv')
         approx_reach_path = os.path.join(out_dir, f'APPROX_REACHABLE__date={today}.csv')
-        
+
         real_dfs = []
         approx_dfs = []
         for out in outputs:
@@ -386,7 +387,7 @@ if __name__ == '__main__':
         real_df_.to_csv(real_reach_path)
         approx_df_ = pd.concat(approx_dfs)
         approx_df_.to_csv(approx_reach_path)
-    
+
     # CONNECTED COMPONENTS QUERY
     if query_exp[3]:
         inputs = []
@@ -398,8 +399,9 @@ if __name__ == '__main__':
             file_name = os.path.basename(path)
             params = sut.get_params_from_summary_name(file_name)
             inputs.append([path, True, orig_node_id_maps[params['data']]])
-        outputs = process_map(parallel_connected_components, inputs, max_workers=workers)
-        
+        outputs = process_map(parallel_connected_components, inputs,
+                              max_workers=workers)
+
         today = ut.get_date_str()
         real_ppr_path = os.path.join(out_dir, f'ACTUAL_CCS__date={today}.csv')
         approx_ppr_path = os.path.join(out_dir, f'APPROX_CCS__date={today}.csv')
@@ -437,12 +439,13 @@ if __name__ == '__main__':
                 file_name = os.path.basename(path)
                 params = sut.get_params_from_summary_name(file_name)
                 inputs.append([path, True, node_samples[params['data']], h_d, orig_node_id_maps[params['data']]])
-        outputs = process_map(parallel_reachable_at_k, inputs, max_workers=workers)
-        
+        outputs = process_map(parallel_reachable_at_k, inputs,
+                              max_workers=workers)
+
         today = ut.get_date_str()
         real_reach_path = os.path.join(out_dir, f'ACTUAL_REACHABLE_AT_K__date={today}.csv')
         approx_reach_path = os.path.join(out_dir, f'APPROX_REACHABLE_AT_K__date={today}.csv')
-        
+
         real_dfs = []
         approx_dfs = []
         for out in outputs:
@@ -488,7 +491,7 @@ if __name__ == '__main__':
         today = ut.get_date_str()
         real_reach_path = os.path.join(out_dir, f'ACTUAL_CLOSENESS__date={today}.csv')
         approx_reach_path = os.path.join(out_dir, f'APPROX_CLOSENESS__date={today}.csv')
-        
+
         real_dfs = []
         approx_dfs = []
         for out in outputs:

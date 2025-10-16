@@ -23,12 +23,12 @@ def parallel_IM(inp):
     out_dir = inp[3]
     node_id_map = inp[4]
     args = inp[5]
-    
+
     hyperG, node_clusters, _ = load_hypergraph(data_path, node_id_map)
-    degree_dict:Dict[int,int] = dict()
-    hyperdegree_dict:Dict[int,int] = dict()
-    neighbor_dict:Dict[int,List[int]] = dict()
-    incident_hyperedge_dict:Dict[int,List[Tuple[int]]] = dict()
+    degree_dict: Dict[int, int] = dict()
+    hyperdegree_dict: Dict[int, int] = dict()
+    neighbor_dict: Dict[int, List[int]] = dict()
+    incident_hyperedge_dict: Dict[int, List[Tuple[int]]] = dict()
     for n in hyperG.get_nodes():
         degree_dict[n] = len(hyperG.get_neighbors(n))
         hyperdegree_dict[n] = hyperG.degree(n)
@@ -36,25 +36,24 @@ def parallel_IM(inp):
         incident_hyperedge_dict[n] = hyperG.get_incident_edges(n)
 
     rng = random.Random(seed)
-    
+
     data_dir = os.path.dirname(data_path)
     fname = os.path.basename(data_path)
     activ_fp = os.path.join(out_dir, f'activation_attempts__seed={seed}__model={args["model"]}__input={fname}.csv')
     hypv_fp = os.path.join(out_dir, f'hypervolume__seed={seed}__model={args["model"]}__input={fname}.csv')
-    
+
     actual_max = args['max_seed_nodes']
     args['max_seed_nodes'] = min(args['max_seed_nodes'], len(node_clusters))
     args['min_seed_nodes'] = min(args['min_seed_nodes'], len(node_clusters))
 
     start_time = time.time()
     # smart initialization
-    initial_population = create_initial_population(
-                                        hypergraph=hyperG,
-                                        min_k=args['min_seed_nodes'],
-                                        max_k=args['max_seed_nodes'],
-                                        n=args['population_size'],
-                                        prng=rng,
-                                        strategy=args['init_strategy'])
+    initial_population = create_initial_population(hypergraph=hyperG,
+                                                   min_k=args['min_seed_nodes'],
+                                                   max_k=args['max_seed_nodes'],
+                                                   n=args['population_size'],
+                                                   prng=rng,
+                                                   strategy=args['init_strategy'])
     # run multi-objective evolutionary algorithm optimization
     pareto_front, final_pop = moea_influence_maximization(
                                         hypergraph=hyperG,
@@ -69,18 +68,18 @@ def parallel_IM(inp):
                                         output_hypervolume_file_path=hypv_fp,
                                         args=args)
     end_t = time.time() - start_time
-    
+
     output = {
         'Time (s)': end_t,
         'Run': seed,
-        'Seed Sets (pareto)': [index[0] for index in pareto_front], 
+        'Seed Sets (pareto)': [index[0] for index in pareto_front],
         'Node Perc. as Seed Set (pareto)': [index[2] for index in pareto_front],
         'Perc. Influenced Nodes (pareto)': [index[1] for index in pareto_front],
         'Seed Sets (last gen)': [index[0] for index in final_pop],
         'Node Perc. as Seed Set (last gen)': [index[2] for index in final_pop],
         'Perc. Influenced Nodes (last gen)': [index[1] for index in final_pop]
     }
-    
+
     if is_summary:
         output_upscaling = []
         # read original hypergraph to test upscaled seed set
@@ -128,13 +127,13 @@ def parallel_IM(inp):
 
 
 if __name__ == '__main__':
-    
+
     parser = ut.get_parser()
     args = parser.parse_args()
     cfg = ut.load_hyperparams(args.defaults)
     cfg_run = ut.load_hyperparams(args.config)
     cfg.update(cfg_run)
-    
+
     data_dir = cfg['data_dir']
     out_dir = cfg['out_dir']
     datasets = cfg['datasets']
@@ -144,13 +143,13 @@ if __name__ == '__main__':
     workers = cfg['max_workers']
 
     r = cfg['r']
-    b = cfg['b']    
+    b = cfg['b']
     min_size = cfg['min_size']
     max_trials = cfg['max_trials']
     max_no_improvements = cfg['max_no_improvements']
     custom_mutation = True if cfg['custom_mutation'] == 'True' else False
-    
-    args_im ={
+
+    args_im = {
         'min_seed_nodes': cfg['min_seed_nodes'],  # min size of a seed set
         'max_seed_nodes': cfg['max_seed_nodes'],  # max size of a seed set
         'population_size': cfg['population_size'],  # number of seed sets to create
@@ -170,18 +169,18 @@ if __name__ == '__main__':
         'n_threads': workers,
         'init_strategy': cfg['init_strategy']
     }
-    
-    # OUTPUT    
+
+    # OUTPUT
     os.makedirs(out_dir, exist_ok=True)
     summary_dir = os.path.join(out_dir, 'summaries')
-    
+
     # ORIGINAL
     inputs = []
     for dataset in dataset_names:
         data_path = os.path.join(summary_dir, f'original__data={dataset}.csv')
         # load original hypergraph to get the node id map to use for loading the summaries
         _, _, node_id_map = load_hypergraph(data_path, dict())
-        
+
         for seed in range(nruns):
             inputs.append([data_path, False, seed, out_dir, node_id_map, args_im])
 
@@ -191,16 +190,16 @@ if __name__ == '__main__':
                     sum_path = os.path.join(summary_dir, sum_name)
                     inputs.append([sum_path, True, seed, out_dir, node_id_map, args_im])
     outputs = process_map(parallel_IM, inputs, max_workers=workers)
-    
+
     today = ut.get_date_str()
     real_im_path = os.path.join(out_dir, f'ACTUAL_IM__model={args_im["model"]}__date={today}.csv')
     approx_im_path = os.path.join(out_dir, f'APPROX_IM__model={args_im["model"]}__date={today}.csv')
     approx_up_im_path = os.path.join(out_dir, f'APPROX_IM_UPSCALED__model={args_im["model"]}__date={today}.csv')
-    
+
     real_dfs = []
     approx_dfs = []
     approx_up_dfs = []
-    
+
     for out in outputs:
         keys = set(out.keys()).difference(['Seed Sets (pareto)',
                                            'Node Perc. as Seed Set (pareto)',
@@ -221,7 +220,7 @@ if __name__ == '__main__':
                          out['Node Perc. as Seed Set (last gen)'][idx],
                          out['Perc. Influenced Nodes (last gen)'][idx],
                          'Final Population'])
-        df = pd.DataFrame(rows, columns=['Seed Set', 
+        df = pd.DataFrame(rows, columns=['Seed Set',
                                          '% Nodes in Seed Set',
                                          'Mean % Influenced Nodes',
                                          'Solution Type'])

@@ -77,7 +77,7 @@ def cc_cost(k, l, NX, NY, DnZ):
             c += np.log2(Nxy[i, j] + 1)
     # Step 4.1: Encoding cost for data in each block
     with np.errstate(divide='ignore', invalid='ignore'):
-        Pz = (Dz / Nxy).toarray() # type: ignore
+        Pz = (Dz / Nxy).toarray()  # type: ignore
         Pz[~np.isfinite(Pz)] = 0  # Handle division by zero
         Pnz = (Dnz / Nxy).toarray()
         Pnz[~np.isfinite(Pnz)] = 0
@@ -89,9 +89,9 @@ def cc_cost(k, l, NX, NY, DnZ):
     return c
 
 
-def cos_col_hash2(r, b, k0, l0, Nx, NY, QY, DnZ, 
-                  min_size: int=2,
-                  max_trials: int=5):
+def cos_col_hash2(r, b, k0, l0, Nx, NY, QY, DnZ,
+                  min_size: int = 2,
+                  max_trials: int = 5):
     """
     Compute random-projection signatures and hash columns into buckets.
 
@@ -128,7 +128,7 @@ def cos_col_hash2(r, b, k0, l0, Nx, NY, QY, DnZ,
     assert len(cluster_ids) == len(Ny)
     assert len(cluster_ids) == np.sum(Ny > 0)
     assert len(cluster_ids) == l0
-    
+
     ucg, candidategroups = generate_candidate_groups(r, b, k0, l0, Pnz)
 
     m = len(Qy)
@@ -246,7 +246,7 @@ def jac_col_hash2(A, r, b, NY, QY, min_size=5):
     Ny = NY.copy()
     Qy = QY.copy()
     n, m = A.shape
-    
+
     ucg, candidategroups = generate_candidate_groups_jac(r, b, A)
     # try merging candidate GROUPS, don't if cost larger
     for uc in ucg:
@@ -308,14 +308,14 @@ def jac_col_hash2(A, r, b, NY, QY, min_size=5):
     return Ny, Qy
 
 
-def hc_search(A, 
-              r=20, 
-              b=5, 
-              seed=42, 
+def hc_search(A,
+              r=20,
+              b=5,
+              seed=42,
               cost_threshold=1e-6,
-              min_size: int=2,
-              max_trials: int=5,
-              max_no_improvements: int=2,
+              min_size: int = 2,
+              max_trials: int = 5,
+              max_no_improvements: int = 2,
               verbose=False):
     """
     Parameters:
@@ -461,7 +461,7 @@ def hc_search(A,
 
         if no_improvements >= max_no_improvements:
             break
-        
+
         it += 1
 
     print(f"Final cost {c0:.6f}")

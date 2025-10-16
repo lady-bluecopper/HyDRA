@@ -1,5 +1,5 @@
 from collections import defaultdict
-from coclust.coclustering import CoclustInfo as ITCC, CoclustSpecMod as SMCC, CoclustMod as MCC # type: ignore
+from coclust.coclustering import CoclustInfo as ITCC, CoclustSpecMod as SMCC, CoclustMod as MCC 
 from sklearn.cluster import SpectralCoclustering as SC, SpectralBiclustering as SB
 from scipy.sparse import csr_matrix
 import numpy as np
@@ -16,7 +16,7 @@ import utils as ut
 from taucc.taucc import CoClust as CC
 from tautcc.tautcc import CoClust as TCC
 
-    
+
 def parallel_summarization(inp):
     data_path = inp[0]
     dataset = inp[1]
@@ -27,7 +27,7 @@ def parallel_summarization(inp):
 
     weighted = True if cfg['datasets'][dataset]['weighted'] == 'True' else False
     A, H, node_id_map, hedge_weights = ut.load_matrix_and_hypergraph(data_path, weighted=weighted)
-    
+
     start = time.time()
     if algo.startswith('Random'):
         r = cfg['datasets'][dataset]["means_nclusters"][0]
@@ -51,15 +51,15 @@ def parallel_summarization(inp):
         max_no_improvements = cfg['max_no_improvements']
         cost_thresh = cfg['algorithms'][algo]
         _, _, Nx, Ny, Qx, Qy, DnZ, _, _, stats = ut.get_biclustering(A,
-                                                                    algo,
-                                                                    seed,
-                                                                    r,
-                                                                    b,
-                                                                    min_size,
-                                                                    max_trials,
-                                                                    max_no_improvements,
-                                                                    cost_thresh,
-                                                                    cfg['weights'])
+                                                                     algo,
+                                                                     seed,
+                                                                     r,
+                                                                     b,
+                                                                     min_size,
+                                                                     max_trials,
+                                                                     max_no_improvements,
+                                                                     cost_thresh,
+                                                                     cfg['weights'])
         ccids = np.unique(Qy)
         rcids = np.unique(Qx)
     else:
@@ -68,7 +68,7 @@ def parallel_summarization(inp):
         min_size = -1
         max_trials = -1
         max_no_improvements = -1
-        
+
         if cfg['use_means']:
             n_clusters = cfg['datasets'][dataset]['means_nclusters'][0]
         else:
@@ -77,12 +77,12 @@ def parallel_summarization(inp):
             except:
                 n_clusters = -1
         r = n_clusters
-        
+
         if algo == 'cc':
             n_clusters = r = 50
-            model = CC(k=50, 
+            model = CC(k=50,
                        l=50,
-                       initialization='random', 
+                       initialization='random',
                        random_state=seed,
                        verbose=False)
         elif algo == 'tcc':
@@ -114,32 +114,32 @@ def parallel_summarization(inp):
                         random_state=seed)
         else:
             raise NotImplementedError
-        
+
         # COMMENT FOR LARGE DATASETS AND USE A
         B = np.asarray(A.todense())
         model.fit(B)
-        
+
         # Process output
         if algo == 'tcc':
-            row_labels = model.labels_[0] # type: ignore
-            col_labels = model.labels_[1] # type: ignore
+            row_labels = model.labels_[0]
+            col_labels = model.labels_[1]
         else:
-            row_labels = model.row_labels_ # type: ignore
-            col_labels = model.column_labels_ # type: ignore
+            row_labels = model.row_labels_
+            col_labels = model.column_labels_
         # remap row labels
-        num_r_labels = len(set(row_labels)) # type: ignore
+        num_r_labels = len(set(row_labels))
         new_labels = dict()
-        Qx = np.zeros(len(row_labels), dtype=np.int32) # type: ignore
-        for idx, l in enumerate(row_labels): # type: ignore
+        Qx = np.zeros(len(row_labels), dtype=np.int32)
+        for idx, l in enumerate(row_labels):
             if l not in new_labels:
                 new_labels[l] = len(new_labels)
             Qx[idx] = new_labels[l]
         rcids = np.arange(num_r_labels)
         # remap col labels
-        num_c_labels = len(set(col_labels)) # type: ignore
+        num_c_labels = len(set(col_labels))
         new_labels = dict()
-        Qy = np.zeros(len(col_labels), dtype=np.int32) # type: ignore
-        for idx, l in enumerate(col_labels): # type: ignore
+        Qy = np.zeros(len(col_labels), dtype=np.int32)
+        for idx, l in enumerate(col_labels):
             if l not in new_labels:
                 new_labels[l] = len(new_labels)
             Qy[idx] = new_labels[l]
@@ -164,13 +164,12 @@ def parallel_summarization(inp):
                         if v in clrl_map[ri]:
                             DnZ[ri][ci] += 1
         DnZ = csr_matrix(DnZ)
-        
-    
+
     end = time.time() - start
     out = sut.get_and_evaluate_summary(Nx, Ny, Qx, Qy,
                                        DnZ, ccids, rcids,
-                                       A, 
-                                       dataset, 
+                                       A,
+                                       dataset,
                                        algo,
                                        cost_thresh,
                                        r,
@@ -189,7 +188,7 @@ def parallel_summarization(inp):
 
 
 if __name__ == '__main__':
-    
+
     parser = ut.get_parser()
     args = parser.parse_args()
     cfg = ut.load_hyperparams(args.defaults)
@@ -207,7 +206,7 @@ if __name__ == '__main__':
 
     summary_dir = os.path.join(out_dir, 'summaries')
     os.makedirs(summary_dir, exist_ok=True)
-    
+
     for dataset_name in dataset_names:
         if dataset_name.endswith('.csv'):
             data_path = os.path.join(data_dir, dataset_name)
@@ -225,7 +224,8 @@ if __name__ == '__main__':
             inv_node_id_map = {k: v for v, k in n_id_map.items()}
         out_name = f'original__data={dataset_name}.csv'
         out_path = os.path.join(summary_dir, out_name)
-        sut.save_summary(V, H, H_w, list(), out_path, inv_node_id_map=inv_node_id_map)
+        sut.save_summary(V, H, H_w, list(), out_path,
+                         inv_node_id_map=inv_node_id_map)
 
     inputs = []
     for dataset_name in dataset_names:
@@ -241,10 +241,11 @@ if __name__ == '__main__':
                                seed,
                                summary_dir,
                                cfg])
-    
+
     today = ut.get_date_str()
     if workers > 1:
-        outputs = process_map(parallel_summarization, inputs, max_workers=workers)
+        outputs = process_map(parallel_summarization, inputs,
+                              max_workers=workers)
     else:
         outputs = []
         for inp in inputs:
