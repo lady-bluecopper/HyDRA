@@ -240,7 +240,8 @@ if __name__ == '__main__':
         data_path = os.path.join(summary_dir, f'original__data={dataset}.csv')
         _, _, _, _, node_id_map = sut.load_summary(data_path, dict())
         orig_paths.append(data_path)
-        orig_node_id_maps[dataset] = node_id_map
+        dataname = dataset.split('.')[0]
+        orig_node_id_maps[dataname] = node_id_map
 
         for algo in algo_names:
             for run in range(nruns):
@@ -261,11 +262,16 @@ if __name__ == '__main__':
         for path in orig_paths:
             file_name = os.path.basename(path)
             dname = file_name.split('__')[1].split('=')[1].split('.')[0]
-            inputs.append([path, False, alpha, num_iter, node_samples[dname], version, orig_node_id_maps[dname]])
+            inputs.append([path, False, alpha, num_iter, node_samples[dname],
+                           version, orig_node_id_maps[dname]])
         for path in summary_paths:
             file_name = os.path.basename(path)
             params = sut.get_params_from_summary_name(file_name)
-            inputs.append([path, True, alpha, num_iter, node_samples[params['data']], version, orig_node_id_maps[params['data']]])
+            dataname = params['data'].split('.')[0]
+            inputs.append([path, True, alpha, num_iter,
+                           node_samples[dataname],
+                           version,
+                           orig_node_id_maps[dataname]])
         outputs = process_map(parallel_pagerank, inputs, max_workers=workers)
 
         today = ut.get_date_str()
@@ -306,7 +312,8 @@ if __name__ == '__main__':
         for path in summary_paths:
             file_name = os.path.basename(path)
             params = sut.get_params_from_summary_name(file_name)
-            inputs.append([path, True, orig_node_id_maps[params['data']]])
+            dataname = params['data'].split('.')[0]
+            inputs.append([path, True, orig_node_id_maps[dataname]])
         outputs = process_map(parallel_node_degrees, inputs,
                               max_workers=workers)
 
@@ -319,7 +326,8 @@ if __name__ == '__main__':
         for out in outputs:
             rows = []
             for v in out['Node Degs']:
-                rows.append([v, out['Node Degs'][v], out['Node Hyper-Degs'][v]])
+                rows.append([v, out['Node Degs'][v],
+                             out['Node Hyper-Degs'][v]])
             df = pd.DataFrame(rows, columns=['Node', 'Degree', 'Hyper-degree'])
             for key in out:
                 if key in ['Node Degs', 'Node Hyper-Degs']:
@@ -357,11 +365,14 @@ if __name__ == '__main__':
             for path in orig_paths:
                 file_name = os.path.basename(path)
                 dname = file_name.split('__')[1].split('=')[1].split('.')[0]
-                inputs.append([path, False, node_samples[dname][run], run, orig_node_id_maps[dname]])
+                inputs.append([path, False, node_samples[dname][run], run,
+                               orig_node_id_maps[dname]])
             for path in summary_paths:
                 file_name = os.path.basename(path)
                 params = sut.get_params_from_summary_name(file_name)
-                inputs.append([path, True, node_samples[params['data']][run], run, orig_node_id_maps[params['data']]])
+                dataname = params['data'].split('.')[0]
+                inputs.append([path, True, node_samples[dataname][run],
+                               run, orig_node_id_maps[dataname]])
         outputs = process_map(parallel_reachability, inputs, max_workers=workers)
 
         today = ut.get_date_str()
@@ -398,10 +409,10 @@ if __name__ == '__main__':
         for path in summary_paths:
             file_name = os.path.basename(path)
             params = sut.get_params_from_summary_name(file_name)
-            inputs.append([path, True, orig_node_id_maps[params['data']]])
-        outputs = process_map(parallel_connected_components, inputs,
-                              max_workers=workers)
-
+            dataname = params['data'].split('.')[0]
+            inputs.append([path, True, orig_node_id_maps[dataname]])
+        outputs = process_map(parallel_connected_components,
+                              inputs, max_workers=workers)
         today = ut.get_date_str()
         real_ppr_path = os.path.join(out_dir, f'ACTUAL_CCS__date={today}.csv')
         approx_ppr_path = os.path.join(out_dir, f'APPROX_CCS__date={today}.csv')
@@ -426,7 +437,9 @@ if __name__ == '__main__':
         for path in orig_paths:
             file_name = os.path.basename(path)
             dname = file_name.split('__')[1].split('=')[1].split('.')[0]
-            dname, sampl = ut.sample_node_set_from_hypergraph(path, orig_node_id_maps[dname], sample_size)
+            dname, sampl = ut.sample_node_set_from_hypergraph(path,
+                                                              orig_node_id_maps[dname],
+                                                              sample_size)
             node_samples[dname] = sampl
         # Answer queries
         inputs = []
@@ -434,14 +447,16 @@ if __name__ == '__main__':
             for path in orig_paths:
                 file_name = os.path.basename(path)
                 dname = file_name.split('__')[1].split('=')[1].split('.')[0]
-                inputs.append([path, False, node_samples[dname], h_d, orig_node_id_maps[dname]])
+                inputs.append([path, False, node_samples[dname],
+                               h_d, orig_node_id_maps[dname]])
             for path in summary_paths:
                 file_name = os.path.basename(path)
                 params = sut.get_params_from_summary_name(file_name)
-                inputs.append([path, True, node_samples[params['data']], h_d, orig_node_id_maps[params['data']]])
+                dataname = params['data'].split('.')[0]
+                inputs.append([path, True, node_samples[dataname], h_d,
+                               orig_node_id_maps[dataname]])
         outputs = process_map(parallel_reachable_at_k, inputs,
                               max_workers=workers)
-
         today = ut.get_date_str()
         real_reach_path = os.path.join(out_dir, f'ACTUAL_REACHABLE_AT_K__date={today}.csv')
         approx_reach_path = os.path.join(out_dir, f'APPROX_REACHABLE_AT_K__date={today}.csv')
@@ -481,11 +496,14 @@ if __name__ == '__main__':
         for path in orig_paths:
             file_name = os.path.basename(path)
             dname = file_name.split('__')[1].split('=')[1].split('.')[0]
-            inputs.append([path, False, node_samples[dname], orig_node_id_maps[dname]])
+            inputs.append([path, False, node_samples[dname],
+                           orig_node_id_maps[dname]])
         for path in summary_paths:
             file_name = os.path.basename(path)
             params = sut.get_params_from_summary_name(file_name)
-            inputs.append([path, True, node_samples[params['data']], orig_node_id_maps[params['data']]])
+            dataname = params['data'].split('.')[0]
+            inputs.append([path, True, node_samples[dataname],
+                           orig_node_id_maps[dataname]])
         outputs = process_map(parallel_closeness, inputs, max_workers=workers)
 
         today = ut.get_date_str()

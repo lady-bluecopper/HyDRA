@@ -5,8 +5,8 @@ import scipy.sparse as sp
 import time
 
 
-def compute_Dnz2_opt(NY: np.ndarray,
-                     DNZ: csr_matrix,
+def compute_Dnz2_opt(NY: np.ndarray, 
+                     DNZ: csr_matrix, 
                      cluster_ids: np.ndarray):
     """
     Compute DnZ.
@@ -56,10 +56,10 @@ def compute_Dnz2_opt(NY: np.ndarray,
     return ln, Ny, DnZ
 
 
-def compute_Dnz_opt(Qx: np.ndarray,
-                    NX: np.ndarray,
-                    Qy: np.ndarray,
-                    NY: np.ndarray,
+def compute_Dnz_opt(Qx: np.ndarray, 
+                    NX: np.ndarray, 
+                    Qy: np.ndarray, 
+                    NY: np.ndarray, 
                     DNZ: csr_matrix):
 
     ux = np.unique(Qx)
@@ -201,7 +201,7 @@ def generate_candidate_groups_jac(r: int,  # signature size
                 candidategroups[idx] = min_group
     ucg = np.unique(candidategroups)
     return ucg, candidategroups
-
+    
 
 def logstar2(n):
     if n <= 0:

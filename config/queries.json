@@ -8,7 +8,9 @@
     ],
     "algorithm_names": [
         "CoClusLSH",
-        "HyDRA"
+        "HyDRA",
+        "gahgc",
+        "dhcc"
     ],
     "query_exp": [
         0,

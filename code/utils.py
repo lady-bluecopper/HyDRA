@@ -2,7 +2,7 @@ import argparse
 from collections import defaultdict
 from datetime import datetime
 from itertools import combinations
-import graph_tool as gt
+# import graph_tool as gt
 import json
 import numpy as np
 import pandas as pd
@@ -20,7 +20,7 @@ def load_hyperparams(path):
     # load hyperparameter values from json
     with open(path, "r") as f:
         return json.load(f)
-
+    
 
 def get_parser():
     # two arguments: path to default values
@@ -28,32 +28,56 @@ def get_parser():
     # hyperparameters
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
+        "--config", 
+        type=str, 
+        required=True, 
         help="Path to hyperparameter config file"
     )
     parser.add_argument(
-        "--defaults",
-        type=str,
-        required=True,
+        "--defaults", 
+        type=str, 
+        required=True, 
         help="Path to hyperparameter defaults config file"
     )
     return parser
 
 
 def get_summary_file_name(algo_name: str,
-                          dataset: str,
+                          dataset: str, 
                           run: int,
                           cfg: Dict):
     # returns the filename of the summary generated
     # by *algo_name* with seed *run*
-    if algo_name in ['CoClusLSH', 'HyDRA']:
+    if algo_name == 'dhcc':
+        use_means = (cfg['use_means'] == 'True'
+                     if isinstance(cfg['use_means'], str)
+                     else bool(cfg['use_means']))
+        if use_means:
+            nr_clusters, nc_clusters = \
+                cfg['datasets'][dataset]['means_nclusters']
+        else:
+            params = cfg['algorithms']['dhcc']
+            nr_clusters = params['default_nclusters']
+            nc_clusters = params.get(
+                'default_n_column_clusters', nr_clusters
+            )
         return sut.get_summary_name(dataset,
                                     algo_name,
-                                    cfg['algorithms'][algo_name],
-                                    cfg['r'],
-                                    cfg['b'],
+                                    run=run,
+                                    r=nr_clusters,
+                                    b=nc_clusters)
+    if algo_name in ['CoClusLSH', 'HyDRA', 'Leman', 'Leman(our)']:
+        if algo_name == 'Leman':
+            algo_ = 'CoClusLSH'
+        elif algo_name == 'Leman(our)':
+            algo_ = 'HyDRA'
+        else:
+            algo_ = algo_name
+        return sut.get_summary_name(dataset,
+                                    algo_name,
+                                    cfg['algorithms'][algo_], 
+                                    cfg['r'], 
+                                    cfg['b'], 
                                     cfg['min_size'],
                                     cfg['max_trials'],
                                     cfg['max_no_improvements'],
@@ -102,9 +126,9 @@ def compute_matrix_from_hedge_list(hedges: list[list[int]]):
 
 
 def create_graph_projection(supernodes: List,
-                            hyperedges: List,
+                            hyperedges: List, 
                             weights: List,
-                            is_directed: bool = False,
+                            is_directed: bool = False, 
                             is_weighted: bool = True):
     # creates the graph projection of the hypergraph
     edges = defaultdict(int)
@@ -122,7 +146,7 @@ def create_graph_projection(supernodes: List,
 
 
 def create_bip_graph_projection(supernodes: List,
-                                hyperedges: List,
+                                hyperedges: List, 
                                 weights: List,
                                 is_weighted: bool = True):
     # Create bipartite representation of the hypergraph.
@@ -170,7 +194,7 @@ def map_to_K(x: str | None):
 
 
 def compute_stats(H):
-    # compute relevant statistics
+    # compute relevant statistics 
     # of hypergraph *H*
     vertices = set()
     vdegs = defaultdict(int)
@@ -234,7 +258,7 @@ def load_dataset(file_path: str,
                     if v not in node_id_map:
                         node_id_map[v] = vcount
                         vcount += 1
-                    hedge.append(node_id_map[v])
+                    hedge.append(node_id_map[v]) 
                 if len(hedge) > 0:
                     H.append(hedge)
                 weights.append(int(lst[-1]))
@@ -254,7 +278,7 @@ def load_matrix_and_hypergraph(data_path: str,
                                                         Dict[str, int],
                                                         List[int]]:
     # returns the incidence matrix and list of hyperedges
-    # of the hypergraph at path *data_path*.
+    # of the hypergraph at path *data_path*. 
     try_non_empty = True
     if data_path.endswith('.mat'):
         A = csr_matrix(scipy.io.loadmat(data_path)['A'], dtype=np.float64)
@@ -292,7 +316,7 @@ def get_biclustering(adj,
     # or by our version of the algorithm.
     if algo == 'CoClusLSH':
         return lm.hc_search(adj,
-                            seed=seed,
+                            seed=seed, 
                             r=r,
                             b=b,
                             min_size=min_size,
@@ -344,7 +368,7 @@ def generate_random_pairs(cands: List[int], size: int) -> List[Tuple[int, int]]:
     return node_pairs
 
 
-def sample_node_set_from_hypergraph(orig_path: str,
+def sample_node_set_from_hypergraph(orig_path: str, 
                                     node_id_map: Dict[str, int],
                                     sample_size: int) -> Tuple[str, List[int]]:
     # Returns a list of random nodes from the hypergraph at path *orig_path*.

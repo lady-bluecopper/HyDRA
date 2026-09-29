@@ -1,6 +1,7 @@
 from collections import defaultdict
 import heapq
-from itertools import combinations
+from itertools import combinations # type: ignore
+import graph_tool as gt
 from graph_tool.centrality import pagerank as pr
 import networkx as nx
 import numpy as np
@@ -16,17 +17,15 @@ import utils as ut
 
 # PAGERANK QUERY
 def compute_graph_pagerank(file_path: str,
-                           is_summary: bool = False,
-                           alpha: float = 0.85,
-                           max_iter: int = 30,
-                           is_directed: bool = False,
-                           weighted_pr: bool = True,
-                           node_id_map: Dict[str, int] = {}):
+                           is_summary: bool=False,
+                           alpha: float=0.85,
+                           max_iter: int=30,
+                           is_directed: bool=False,
+                           weighted_pr: bool=True,
+                           node_id_map: Dict[str, int]={}):
     # Run PageRank on the graph projection of the hypergraph.
     sn, hedges, weights, _, _ = sut.load_summary(file_path, node_id_map)
-    g = ut.create_graph_projection(sn, hedges, weights,
-                                   is_directed=is_directed,
-                                   is_weighted=weighted_pr)
+    g = ut.create_graph_projection(sn, hedges, weights, is_directed=is_directed, is_weighted=weighted_pr)
     n = g.num_vertices()
     # initialize personalized vector
     eps = 1 / n
@@ -38,8 +37,7 @@ def compute_graph_pagerank(file_path: str,
         ew = g.edge_properties['weight']
     # run PageRank
     st = time.time()
-    PR = np.array(pr(g, damping=alpha, pers=pers,
-                     weight=ew, max_iter=max_iter).fa)
+    PR = np.array(pr(g, damping=alpha, pers=pers, weight=ew, max_iter=max_iter).fa) # type: ignore
     out = [PR]
     if is_summary:
         ppr_nodes = dict()
@@ -52,15 +50,14 @@ def compute_graph_pagerank(file_path: str,
 
 
 def compute_bip_graph_pagerank(file_path: str,
-                               is_summary: bool = False,
-                               alpha: float = 0.85,
-                               max_iter: int = 30,
-                               weighted_pr: bool = True,
-                               node_id_map: Dict[str, int] = {}):
+                               is_summary: bool=False,
+                               alpha: float=0.85,
+                               max_iter: int=30,
+                               weighted_pr: bool=True,
+                               node_id_map: Dict[str, int]={}):
     # Run PageRank on the bipartite representation of the hypergraph.
     sn, hedges, weights, _, _ = sut.load_summary(file_path, node_id_map)
-    g = ut.create_bip_graph_projection(sn, hedges, weights,
-                                       is_weighted=weighted_pr)
+    g = ut.create_bip_graph_projection(sn, hedges, weights, is_weighted=weighted_pr)
     n = g.num_vertices()
     # initialize personalized vector
     eps = 1 / n
@@ -72,8 +69,7 @@ def compute_bip_graph_pagerank(file_path: str,
         ew = g.edge_properties['weight']
     # run PageRank
     st = time.time()
-    PR = np.array(pr(g, damping=alpha, pers=pers,
-                     weight=ew, max_iter=max_iter).fa)
+    PR = np.array(pr(g, damping=alpha, pers=pers, weight=ew, max_iter=max_iter).fa) # type: ignore
     ppr_nodes = dict()
     if is_summary:
         for idx, supN in enumerate(sn):
@@ -89,18 +85,17 @@ def compute_bip_graph_pagerank(file_path: str,
 
 
 def compute_pagerank(file_path: str,
-                     is_summary: bool = False,
-                     v_init: int = -1,
-                     alpha: float = 0.85,
-                     num_iter: int = 30,
-                     node_sample: List[int] = [],
-                     node_id_map: Dict[str, int] = {}):
+                     is_summary: bool=False,
+                     v_init: int=-1,
+                     alpha: float=0.85,
+                     num_iter: int=30,
+                     node_sample: List[int]=[],
+                     node_id_map: Dict[str, int]={}):
     # Run PageRank on the hypergraph.
     sn, hedges, weights, _, _ = sut.load_summary(file_path, node_id_map)
     seed_set = node_sample
     if len(node_sample) == 0:
-        _, seed_set = ut.sample_node_set_from_hypergraph(file_path,
-                                                         node_id_map, 1)
+        _, seed_set = ut.sample_node_set_from_hypergraph(file_path, node_id_map, 1)
     if is_summary:
         inv_v_map = dict()
         for sid, supN in enumerate(sn):
@@ -180,7 +175,9 @@ def get_approx_degrees(sn, se):
     output = dict()
     for idx, supN in enumerate(sn):
         for n in supN:
-            output[n] = len(sn_ngb_expl[idx])
+            # The union contains the query node itself through its supernode;
+            # graph degree excludes self-neighbors.
+            output[n] = max(len(sn_ngb_expl[idx]) - 1, 0)
     return output
 
 
@@ -258,7 +255,7 @@ def are_reachable(n_pair, H, adj, v_h_map):
     return -1
 
 
-def are_reachables(node_pairs: List[Tuple[int, int]],
+def are_reachables(node_pairs: List[Tuple[int, int]], 
                    H: List[List[int]]):
     # For each node pair in *node_pairs*, determines
     # if the two nodes in the pair are reachable from
@@ -270,8 +267,8 @@ def are_reachables(node_pairs: List[Tuple[int, int]],
     return reachables
 
 
-def are_reachables_in_summary(node_pairs: List[Tuple[int, int]],
-                              node_clusters: List[List[int]],
+def are_reachables_in_summary(node_pairs: List[Tuple[int, int]], 
+                              node_clusters: List[List[int]], 
                               superedges: List[List[int]]):
     # For each node pair in *node_pairs*, determines
     # if the two nodes in the pair are reachable from
@@ -283,8 +280,7 @@ def are_reachables_in_summary(node_pairs: List[Tuple[int, int]],
             inv_node_clust[v] = cid
     reachables = dict()
     for n_pair in tqdm(node_pairs):
-        supN_pair = (inv_node_clust.get(n_pair[0], -1),
-                     inv_node_clust.get(n_pair[1], -1))
+        supN_pair = (inv_node_clust.get(n_pair[0], -1), inv_node_clust.get(n_pair[1], -1))
         reachables[n_pair] = are_reachable(supN_pair, superedges, adj, v_h_map)
     return reachables
 
@@ -320,7 +316,7 @@ def reachable_at_k(node, k, H, adj, v_h_map) -> Set[int]:
         queue.append((1, h))
         visited.add(h)
     heapq.heapify(queue)
-
+    
     while len(queue) > 0:
         (h_i_dis, h_i) = heapq.heappop(queue)
         for v in H[h_i]:
@@ -347,7 +343,7 @@ def reachables_at_k(node_list: List[int],
 
 def reachables_at_k_in_summary(node_list: List[int],
                                k: int,
-                               node_clusters: List[List[int]],
+                               node_clusters: List[List[int]], 
                                superedges: List[List[int]]):
     # For each node in *node_list*, finds the set of k-hop
     # neighbors in the summary.
@@ -373,7 +369,7 @@ def closeness_of_node(node: int,
                       H: List[List[int]],
                       adj: Dict[int, Set[int]],
                       v_h_map: Dict[int, List[int]]):
-
+    
     distances = reachables_from_node(node, H, adj, v_h_map)
     dist_sum = 0
     if len(distances) > 0:
@@ -397,7 +393,7 @@ def closeness(node_list: List[int],
 
 
 def closeness_in_summary(node_list: List[int],
-                         node_clusters: List[List[int]],
+                         node_clusters: List[List[int]], 
                          superedges: List[List[int]]):
     # Finds the closeness centrality of each node in *node_list*
     # in the summary.
@@ -411,7 +407,6 @@ def closeness_in_summary(node_list: List[int],
     cl_dict = dict()
     for node in tqdm(node_list):
         supN = inv_node_clust.get(node, -1)
-        supN_clos = closeness_of_node(supN, num_nodes,
-                                      superedges, adj, v_h_map)
+        supN_clos = closeness_of_node(supN, num_nodes, superedges, adj, v_h_map)
         cl_dict[node] = supN_clos
     return cl_dict

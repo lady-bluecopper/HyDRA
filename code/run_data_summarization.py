@@ -1,7 +1,5 @@
-from collections import defaultdict
-from coclust.coclustering import CoclustInfo as ITCC, CoclustSpecMod as SMCC, CoclustMod as MCC 
+from coclust.coclustering import CoclustInfo as ITCC, CoclustSpecMod as SMCC, CoclustMod as MCC # type: ignore
 from sklearn.cluster import SpectralCoclustering as SC, SpectralBiclustering as SB
-from scipy.sparse import csr_matrix
 import numpy as np
 import os
 import sys
@@ -15,8 +13,10 @@ import summary_utils as sut
 import utils as ut
 from taucc.taucc import CoClust as CC
 from tautcc.tautcc import CoClust as TCC
+from gahgc import GAHGC, labels_to_framework_state
+from dhcc import DHCC
 
-
+    
 def parallel_summarization(inp):
     data_path = inp[0]
     dataset = inp[1]
@@ -27,7 +27,7 @@ def parallel_summarization(inp):
 
     weighted = True if cfg['datasets'][dataset]['weighted'] == 'True' else False
     A, H, node_id_map, hedge_weights = ut.load_matrix_and_hypergraph(data_path, weighted=weighted)
-
+    
     start = time.time()
     if algo.startswith('Random'):
         r = cfg['datasets'][dataset]["means_nclusters"][0]
@@ -51,15 +51,15 @@ def parallel_summarization(inp):
         max_no_improvements = cfg['max_no_improvements']
         cost_thresh = cfg['algorithms'][algo]
         _, _, Nx, Ny, Qx, Qy, DnZ, _, _, stats = ut.get_biclustering(A,
-                                                                     algo,
-                                                                     seed,
-                                                                     r,
-                                                                     b,
-                                                                     min_size,
-                                                                     max_trials,
-                                                                     max_no_improvements,
-                                                                     cost_thresh,
-                                                                     cfg['weights'])
+                                                                    algo,
+                                                                    seed,
+                                                                    r,
+                                                                    b,
+                                                                    min_size,
+                                                                    max_trials,
+                                                                    max_no_improvements,
+                                                                    cost_thresh,
+                                                                    cfg['weights'])
         ccids = np.unique(Qy)
         rcids = np.unique(Qx)
     else:
@@ -68,8 +68,11 @@ def parallel_summarization(inp):
         min_size = -1
         max_trials = -1
         max_no_improvements = -1
-
-        if cfg['use_means']:
+        
+        use_means = (cfg['use_means'] == 'True'
+                     if isinstance(cfg['use_means'], str)
+                     else bool(cfg['use_means']))
+        if use_means:
             n_clusters = cfg['datasets'][dataset]['means_nclusters'][0]
         else:
             try:
@@ -77,12 +80,12 @@ def parallel_summarization(inp):
             except:
                 n_clusters = -1
         r = n_clusters
-
+        
         if algo == 'cc':
             n_clusters = r = 50
-            model = CC(k=50,
+            model = CC(k=50, 
                        l=50,
-                       initialization='random',
+                       initialization='random', 
                        random_state=seed,
                        verbose=False)
         elif algo == 'tcc':
@@ -112,64 +115,86 @@ def parallel_summarization(inp):
         elif algo == 'mcc':
             model = MCC(n_clusters=n_clusters,
                         random_state=seed)
+        elif algo == 'gahgc':
+            params = cfg['algorithms']['gahgc']
+            bandwidth = params.get('bandwidth', 'median')
+            model = GAHGC(
+                n_clusters=n_clusters,
+                alpha=params.get('alpha', 0.5),
+                max_walk_length=params.get('max_walk_length', 50),
+                n_walks=params.get('n_walks', 50),
+                embedding_dim=params.get('embedding_dim', 32),
+                window=params.get('window', 5),
+                negative_samples=params.get('negative_samples', 5),
+                embedding_epochs=params.get('embedding_epochs', 1),
+                learning_rate=params.get('learning_rate', 0.025),
+                batch_size=params.get('batch_size', 4096),
+                max_iter=params.get('max_iter', 100),
+                bandwidth=bandwidth,
+                embedding_backend=params.get('embedding_backend', 'sgns'),
+                random_state=seed,
+            )
+        elif algo == 'dhcc':
+            params = cfg['algorithms']['dhcc']
+            if use_means:
+                nr_clusters = cfg['datasets'][dataset]['means_nclusters'][0]
+                nc_clusters = cfg['datasets'][dataset]['means_nclusters'][1]
+            else:
+                nr_clusters = params.get('default_nclusters', 9)
+                nc_clusters = params.get(
+                    'default_n_column_clusters', nr_clusters
+                )
+            r = nr_clusters
+            b = nc_clusters
+            model = DHCC(
+                n_row_clusters=nr_clusters,
+                n_column_clusters=nc_clusters,
+                sample_regularisation=params.get(
+                    'sample_regularisation', 100.0
+                ),
+                feature_regularisation=params.get(
+                    'feature_regularisation', 100.0
+                ),
+                n_neighbors=params.get('n_neighbors', 3),
+                max_iter=params.get('max_iter', 100),
+                tol=params.get('tol', 1e-5),
+                metric=params.get('metric', 'euclidean'),
+                kmeans_n_init=params.get('kmeans_n_init', 10),
+                kmeans_max_iter=params.get('kmeans_max_iter', 300),
+                ridge=params.get('ridge', 1e-8),
+                floor=params.get('floor', 1e-12),
+                n_jobs=params.get('n_jobs', None),
+                random_state=seed,
+            )
         else:
             raise NotImplementedError
-
-        # COMMENT FOR LARGE DATASETS AND USE A
-        B = np.asarray(A.todense())
-        model.fit(B)
-
+        
+        # The paper-based competitors operate directly on sparse incidence
+        # matrices.  The original library competitors retain their dense
+        # input contract.
+        if algo in ['gahgc', 'dhcc']:
+            model.fit(A)
+        else:
+            B = np.asarray(A.todense())
+            model.fit(B)
+        
         # Process output
         if algo == 'tcc':
-            row_labels = model.labels_[0]
-            col_labels = model.labels_[1]
+            row_labels = model.labels_[0] # type: ignore
+            col_labels = model.labels_[1] # type: ignore
         else:
-            row_labels = model.row_labels_
-            col_labels = model.column_labels_
-        # remap row labels
-        num_r_labels = len(set(row_labels))
-        new_labels = dict()
-        Qx = np.zeros(len(row_labels), dtype=np.int32)
-        for idx, l in enumerate(row_labels):
-            if l not in new_labels:
-                new_labels[l] = len(new_labels)
-            Qx[idx] = new_labels[l]
-        rcids = np.arange(num_r_labels)
-        # remap col labels
-        num_c_labels = len(set(col_labels))
-        new_labels = dict()
-        Qy = np.zeros(len(col_labels), dtype=np.int32)
-        for idx, l in enumerate(col_labels):
-            if l not in new_labels:
-                new_labels[l] = len(new_labels)
-            Qy[idx] = new_labels[l]
-        ccids = np.arange(num_c_labels)
-        # cluster sizes
-        clrl_map = defaultdict(set)
-        Nx = np.zeros(num_r_labels, dtype=np.int32)
-        for idx, l in enumerate(Qx):
-            Nx[l] += 1
-            clrl_map[int(l)].add(idx)
-        clcl_map = defaultdict(set)
-        Ny = np.zeros(num_c_labels, dtype=np.int32)
-        for idx, l in enumerate(Qy):
-            Ny[l] += 1
-            clcl_map[int(l)].add(idx)
-        # number of non zeros
-        DnZ = np.zeros((Nx.shape[0], Ny.shape[0]))
-        for ri in range(Nx.shape[0]):
-            for ci in range(Ny.shape[0]):
-                for hix in clcl_map[ci]:
-                    for v in H[hix]:
-                        if v in clrl_map[ri]:
-                            DnZ[ri][ci] += 1
-        DnZ = csr_matrix(DnZ)
-
+            row_labels = model.row_labels_ # type: ignore
+            col_labels = model.column_labels_ # type: ignore
+        rcids, ccids, Nx, Ny, Qx, Qy, DnZ = labels_to_framework_state(
+            A, row_labels, col_labels
+        )
+        
+    
     end = time.time() - start
     out = sut.get_and_evaluate_summary(Nx, Ny, Qx, Qy,
                                        DnZ, ccids, rcids,
-                                       A,
-                                       dataset,
+                                       A, 
+                                       dataset, 
                                        algo,
                                        cost_thresh,
                                        r,
@@ -188,7 +213,7 @@ def parallel_summarization(inp):
 
 
 if __name__ == '__main__':
-
+    
     parser = ut.get_parser()
     args = parser.parse_args()
     cfg = ut.load_hyperparams(args.defaults)
@@ -206,7 +231,7 @@ if __name__ == '__main__':
 
     summary_dir = os.path.join(out_dir, 'summaries')
     os.makedirs(summary_dir, exist_ok=True)
-
+    
     for dataset_name in dataset_names:
         if dataset_name.endswith('.csv'):
             data_path = os.path.join(data_dir, dataset_name)
@@ -224,8 +249,7 @@ if __name__ == '__main__':
             inv_node_id_map = {k: v for v, k in n_id_map.items()}
         out_name = f'original__data={dataset_name}.csv'
         out_path = os.path.join(summary_dir, out_name)
-        sut.save_summary(V, H, H_w, list(), out_path,
-                         inv_node_id_map=inv_node_id_map)
+        sut.save_summary(V, H, H_w, list(), out_path, inv_node_id_map=inv_node_id_map)
 
     inputs = []
     for dataset_name in dataset_names:
@@ -241,11 +265,10 @@ if __name__ == '__main__':
                                seed,
                                summary_dir,
                                cfg])
-
+    
     today = ut.get_date_str()
     if workers > 1:
-        outputs = process_map(parallel_summarization, inputs,
-                              max_workers=workers)
+        outputs = process_map(parallel_summarization, inputs, max_workers=workers)
     else:
         outputs = []
         for inp in inputs:

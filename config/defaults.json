@@ -118,6 +118,36 @@
         "tcc": {
             "default_nclusters": 10
         },
+        "gahgc": {
+          "default_nclusters": 9,
+          "alpha": 0.5,
+          "max_walk_length": 50,
+          "n_walks": 100,
+          "embedding_dim": 32,
+          "window": 5,
+          "negative_samples": 5,
+          "embedding_epochs": 1,
+          "learning_rate": 0.025,
+          "batch_size": 4096,
+          "max_iter": 100,
+          "bandwidth": "median",
+          "embedding_backend": "sgns"
+        },
+        "dhcc": {
+          "default_nclusters": 9,
+          "default_n_column_clusters": 9,
+          "sample_regularisation": 1000.0,
+          "feature_regularisation": 1000.0,
+          "n_neighbors": 5,
+          "max_iter": 100,
+          "tol": 1e-05,
+          "metric": "euclidean",
+          "kmeans_n_init": 10,
+          "kmeans_max_iter": 300,
+          "ridge": 1e-08,
+          "floor": 1e-12,
+          "n_jobs": null
+        },
         "sc": {
             "default_nclusters": 9
         },

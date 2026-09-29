@@ -8,7 +8,9 @@
     ],
     "algorithm_names": [
         "CoClusLSH",
-        "HyDRA"
+        "HyDRA",
+        "gahgc",
+        "dhcc"
     ],
     "min_seed_nodes": 1,
     "max_seed_nodes": 50,
